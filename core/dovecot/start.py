@@ -23,13 +23,16 @@ def start_podop():
 # Actual startup script
 os.environ["FRONT_ADDRESS"] = system.get_host_address_from_environment("FRONT", "front")
 os.environ["ADMIN_ADDRESS"] = system.get_host_address_from_environment("ADMIN", "admin")
-os.environ["ANTISPAM_WEBUI_ADDRESS"] = system.get_host_address_from_environment("ANTISPAM_WEBUI", "antispam:11334")
+if os.environ.get("ANTSPAM") != 'none':
+    os.environ["ANTISPAM_WEBUI_ADDRESS"] = system.get_host_address_from_environment("ANTISPAM_WEBUI", "antispam:11334")
 
 for dovecot_file in glob.glob("/conf/*.conf"):
     conf.jinja(dovecot_file, os.environ, os.path.join("/etc/dovecot", os.path.basename(dovecot_file)))
 
 os.makedirs("/conf/bin", exist_ok=True)
 for script_file in glob.glob("/conf/*.script"):
+    if os.environ.get("ANTSPAM") == 'none' and 'ham.script' in script_file:
+        continue
     out_file = os.path.join("/conf/bin/", os.path.basename(script_file).replace('.script',''))
     conf.jinja(script_file, os.environ, out_file)
     os.chmod(out_file, 0o555)
